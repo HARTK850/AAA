@@ -1,0 +1,39 @@
+name: Build and Release EXE on File Update
+
+on:
+  push:
+    branches:
+      - main # שנה ל-master אם שם הענף הראשי שלך הוא master
+    paths:
+      - 'WindowsCredentialViewer.cs' # ירוץ רק כאשר הקובץ הזה משתנה
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    permissions:
+      contents: write # הרשאה ליצירת/עדכון Releases
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Compile C# Code to EXE
+        run: |
+          csc /out:WindowsCredentialViewer.exe WindowsCredentialViewer.cs
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Build
+          body: |
+            גרסה זו שודרגה אוטומטית בעקבות עדכון הקובץ WindowsCredentialViewer.cs.
+          files: WindowsCredentialViewer.exe
+          make_latest: true
+          overwrite: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
